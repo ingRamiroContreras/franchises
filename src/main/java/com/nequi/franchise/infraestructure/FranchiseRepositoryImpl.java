@@ -1,7 +1,7 @@
 package com.nequi.franchise.infraestructure;
 
 import com.nequi.franchise.domain.Franchise;
-import com.nequi.franchise.domain.FranquiciaRepository;
+import com.nequi.franchise.domain.FranchiseRepository;
 import com.nequi.franchise.infraestructure.entities.FranchiseEntity;
 
 import com.nequi.franchise.infraestructure.jpa.FranchiseJpaRepository;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 @Repository
-public class FranchiseRepositoryImpl implements FranquiciaRepository {
+public class FranchiseRepositoryImpl implements FranchiseRepository {
 
     private FranchiseJpaRepository franchiseJpaRepository;
 
