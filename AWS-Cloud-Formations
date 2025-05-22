@@ -1,0 +1,105 @@
+[object Object]AWSTemplateFormatVersion: '2010-09-09'
+Description: 'API Gateway with Load Balancer, EC2 Auto Scaling Group in private subnets, and MySQL RDS'
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t2.micro
+    Description: EC2 instance type
+  DBInstanceClass:
+    Type: String
+    Default: db.t3.micro
+    Description: RDS instance class
+  DBName:
+    Type: String
+    Default: mydb
+    Description: Database name
+  DBUsername:
+    Type: String
+    Description: Database admin username
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: Database admin password
+
+Resources:
+  # VPC y subredes
+  NequiVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: NequiVPC
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref NequiVPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref NequiVPC
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: true
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref NequiVPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: 10.0.3.0/24
+      MapPublicIpOnLaunch: false
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref NequiVPC
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: 10.0.4.0/24
+      MapPublicIpOnLaunch: false
+
+  # Internet Gateway
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref NequiVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # NAT Gateway
+  NatGatewayEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: AttachGateway
+    Properties:
+      Domain: vpc
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayEIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+
+  # Route Tables
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref NequiVPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
