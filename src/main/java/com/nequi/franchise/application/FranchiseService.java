@@ -4,5 +4,5 @@ import com.nequi.franchise.domain.Franchise;
 import reactor.core.publisher.Mono;
 
 public interface FranchiseService {
-    Mono<Franchise> createFranchise(Franchise franquicia);
+    Mono<Franchise> createFranchise(Franchise franchise);
 }

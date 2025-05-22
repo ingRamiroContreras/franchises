@@ -3,11 +3,13 @@ package com.nequi.franchise.infraestructure;
 import com.nequi.franchise.domain.Product;
 import com.nequi.franchise.domain.ProductRepository;
 import com.nequi.franchise.domain.Branch;
-import com.nequi.franchise.domain.Franchise;
 import com.nequi.franchise.infraestructure.entities.ProductEntity;
 import com.nequi.franchise.infraestructure.entities.BranchEntity;
-import com.nequi.franchise.infraestructure.entities.FranchiseEntity;
 import com.nequi.franchise.infraestructure.jpa.ProductJpaRepository;
+
+import jakarta.transaction.Transactional;
+
+import java.util.List;
 
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
@@ -15,16 +17,32 @@ import reactor.core.publisher.Mono;
 @Repository
 public class ProductRepositoryImpl implements ProductRepository {
 
-    private ProductJpaRepository ProductJpaRepository;
+    private ProductJpaRepository productJpaRepository;
 
     public ProductRepositoryImpl(ProductJpaRepository ProductJpaRepository) {
-        this.ProductJpaRepository = ProductJpaRepository;
+        this.productJpaRepository = ProductJpaRepository;
     }
 
     @Override
-    public Mono<Product> save(Product Product) {
-        var ProductEntity = ProductJpaRepository.saveAndFlush(toJpaEntity(Product));
-        return Mono.just(ProductEntity).map(this::toDomainEntity);
+    public Mono<Product> save(Product product) {
+        var productEntity = productJpaRepository.saveAndFlush(toJpaEntity(product));
+        return Mono.just(productEntity).map(this::toDomainEntity);
+    }
+
+    @Override
+    public Mono<Void> delete(Product product) {
+        productJpaRepository.deleteInBatch(List.of(toJpaEntity(product)));
+        return Mono.empty();
+    }
+
+    @Override
+    @Transactional
+    public Mono<Product> updateStock(String productId, Integer newStock) {
+        ProductEntity product = productJpaRepository.getOne(productId);
+        
+        product.setStock(newStock);
+        var productWithNewStock = productJpaRepository.saveAndFlush(product);
+        return Mono.just(toDomainEntity(productWithNewStock));
     }
 
     private ProductEntity toJpaEntity(Product product) {

@@ -2,6 +2,6 @@ package com.nequi.franchise.domain;
 
 import reactor.core.publisher.Mono;
 
-public interface FranquiciaRepository {
+public interface FranchiseRepository {
     Mono<Franchise> save(Franchise franchise);
 }

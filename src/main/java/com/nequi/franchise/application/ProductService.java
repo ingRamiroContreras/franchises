@@ -6,6 +6,6 @@ import reactor.core.publisher.Mono;
 
 public interface ProductService {
     Mono<Product> createProduct(Product product);
-    Mono<Product> deleteProduct(Product product);
-    Mono<Void> updateStock(String product, Integer stockValue);
+    Mono<Void> deleteProduct(Product product);
+    Mono<Product> updateStock(String product, Integer stockValue);
 }
