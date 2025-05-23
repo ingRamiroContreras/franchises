@@ -1,10 +1,13 @@
 package com.nequi.franchise.application;
 
+import org.springframework.stereotype.Service;
+
 import com.nequi.franchise.domain.Product;
 import com.nequi.franchise.domain.ProductRepository;
 
 import reactor.core.publisher.Mono;
 
+@Service
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;

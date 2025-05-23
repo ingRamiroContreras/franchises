@@ -1,28 +1,32 @@
-# Configuración común (puede contener solo algunos valores que no cambian)
+# Configuración común (aplicable a todos los perfiles)
 spring:
   jpa:
-    database-platform: org.hibernate.dialect.MySQL8Dialect
+    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: update
 
 ---
 # Perfil de desarrollo
 spring:
-  profiles: dev
+  config:
+    activate:
+      on-profile: dev
   datasource:
     driver-class-name: org.h2.Driver
     url: jdbc:h2:mem:devdb;DB_CLOSE_DELAY=-1
     username: sa
-    password: 
-  # Opcional: Configuración específica para dev, si es necesario
+    password:
+
+  # Opcional: otras configuraciones específicas de dev
 
 ---
 # Perfil de producción
 spring:
-  profiles: prod
+  config:
+    activate:
+      on-profile: prod
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://your-aws-mysql-endpoint:3306/your-database-name
     username: your-mysql-username
     password: your-mysql-password
-  # Opcional: Configuración específica para prod
