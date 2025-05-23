@@ -2,14 +2,14 @@ version: '3.8'
 
 services:
   springboot-app:
-    image: miapp:springboot  # Cambia por tu etiqueta o especifica build
+    image: miapp:springboot  
     build:
       context: .
-      dockerfile: Dockerfile  # Si tienes un Dockerfile en esta carpeta
+      dockerfile: Dockerfile 
     ports:
-      - "8080:8080"            # Mapea el puerto del host al contenedor
+      - "8080:8080"            
     environment:
-      - SPRING_PROFILES_ACTIVE=prod  # Configura perfiles o variables de entorno
+      - SPRING_PROFILES_ACTIVE=dev  
     restart: unless-stopped
     networks:
       - app-network
