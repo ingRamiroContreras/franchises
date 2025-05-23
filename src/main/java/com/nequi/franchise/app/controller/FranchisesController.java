@@ -25,6 +25,7 @@ import com.nequi.franchise.domain.Product;
 import reactor.core.publisher.Mono;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 
@@ -92,7 +93,7 @@ public class FranchisesController {
                                 .build()));
     }
 
-    @PutMapping("/product/{idProduct/stock}")
+    @GetMapping("/product/{idProduct}/stock/{stock}")
     public Mono<ResponseEntity<ProductResponse>> updateStock(@PathVariable String idProduct,@PathVariable Integer stock ) {
         return productService.updateStock(idProduct, stock)
         .map(createdProduct -> ResponseEntity.status(HttpStatus.OK)

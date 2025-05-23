@@ -69,7 +69,6 @@
       <artifactId>h2</artifactId>
       <scope>runtime</scope>
     </dependency>
-
     <!-- Dependencias de test -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -83,6 +82,7 @@
     </dependency>
 
   </dependencies>
+
 
   <build>
 	<plugins>

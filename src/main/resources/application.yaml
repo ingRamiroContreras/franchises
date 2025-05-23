@@ -2,22 +2,41 @@
 spring:
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
-    hibernate:
-      ddl-auto: update
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        ddl-auto: create
+        dialect: org.hibernate.dialect.MySQLDialect
+        # Para evitar "engine=InnoDB" y otras restricciones específicas de MySQL
+        # en la creación en modo H2, no pongas esas líneas
+        # Si quieres evitar también estrategias de nomenclatura antiguas, comenta o elimina esas líneas:
+        # implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaCompliantImpl
+        # physical_naming_strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        generate_statistics: false
+        format_sql: true
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
 ---
 # Perfil de desarrollo
 spring:
+  h2:
+      console:
+        enabled: true
+        path: /h2-console
   config:
     activate:
       on-profile: dev
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:devdb;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:mem:devdb;DB_CLOSE_DELAY=-1;MODE=MYSQL
     username: sa
-    password:
+    password: 
 
-  # Opcional: otras configuraciones específicas de dev
+  # Otras configuraciones específicas de dev
 
 ---
 # Perfil de producción
