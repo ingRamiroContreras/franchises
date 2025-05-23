@@ -13,6 +13,8 @@ import com.nequi.franchise.app.dto.BranchRequest;
 import com.nequi.franchise.app.dto.BranchResponse;
 import com.nequi.franchise.app.dto.FranchisesRequest;
 import com.nequi.franchise.app.dto.FranchisesResponse;
+import com.nequi.franchise.app.dto.ProductRequest;
+import com.nequi.franchise.app.dto.ProductResponse;
 import com.nequi.franchise.application.BranchService;
 import com.nequi.franchise.application.FranchiseService;
 import com.nequi.franchise.application.ProductService;
@@ -93,7 +95,7 @@ public class FranchisesController {
     @PutMapping("/product/{idProduct/stock}")
     public Mono<ResponseEntity<ProductResponse>> updateStock(@PathVariable String idProduct,@PathVariable Integer stock ) {
         return productService.updateStock(idProduct, stock)
-        .map(createdProduct -> ResponseEntity.status(HttpStatus.CREATED)
+        .map(createdProduct -> ResponseEntity.status(HttpStatus.OK)
         .body(ProductResponse.builder()
                 .name(createdProduct.getName())
                 .id(createdProduct.getId())
@@ -106,11 +108,8 @@ public class FranchisesController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable("id") String productId) {
-        
-        productService.deleteProduct( Product.builder().id(productId).build());
-
-        return  (ResponseEntity<Void>) ResponseEntity.status(HttpStatus.CREATED);
-        
+        productService.deleteProduct(Product.builder().id(productId).build());
+        return ResponseEntity.ok().build(); 
     }
 
     private String generateUuId() {

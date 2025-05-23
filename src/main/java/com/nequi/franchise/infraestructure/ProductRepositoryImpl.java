@@ -31,14 +31,14 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public Mono<Void> delete(Product product) {
-        productJpaRepository.deleteInBatch(List.of(toJpaEntity(product)));
+        productJpaRepository.delete(toJpaEntity(product));
         return Mono.empty();
     }
 
     @Override
     @Transactional
     public Mono<Product> updateStock(String productId, Integer newStock) {
-        ProductEntity product = productJpaRepository.getOne(productId);
+        ProductEntity product = productJpaRepository.findById(productId).get();
         
         product.setStock(newStock);
         var productWithNewStock = productJpaRepository.saveAndFlush(product);
