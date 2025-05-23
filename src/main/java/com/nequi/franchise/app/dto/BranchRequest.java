@@ -1,13 +1,16 @@
 package com.nequi.franchise.app.dto;
 
-import com.nequi.franchise.domain.Franchise;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class BranchRequest {
     private String name;
-    private Franchise franchise;
+    private String franchiseId;
 }

@@ -23,14 +23,13 @@ import com.nequi.franchise.domain.Franchise;
 import com.nequi.franchise.domain.Product;
 
 import reactor.core.publisher.Mono;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 
 
 @RestController
-@RequestMapping("/franchises")
+@RequestMapping("/api")
 public class FranchisesController {
 
     private final BranchService branchService;
@@ -59,11 +58,14 @@ public class FranchisesController {
                                 .build()));
     }
 
-    @PostMapping("/branch")
+    @PostMapping("/franchise/branch")
     public Mono<ResponseEntity<BranchResponse>> createBranch(@RequestBody BranchRequest branchRequest) {
         var branch = Branch.builder()
                 .name(branchRequest.getName())
                 .id(generateUuId())
+                .franchise(Franchise.builder()
+                        .id(branchRequest.getFranchiseId())
+                        .build())
                 .build();
 
         return branchService.createBranch(branch)
@@ -74,11 +76,13 @@ public class FranchisesController {
                                 .build()));
     }
 
-    @PostMapping("/product")
+    @PostMapping("/franchise/branch/product")
     public Mono<ResponseEntity<ProductResponse>> createProduct(@RequestBody ProductRequest productRequest) {
         var product = Product.builder()
                 .name(productRequest.getName())
-                .branch(productRequest.getBranch())
+                .branch(Branch.builder()
+                        .id(productRequest.getBranchId())
+                        .build())
                 .stock(productRequest.getStock())
                 .id(generateUuId())
                 .build();
@@ -93,7 +97,7 @@ public class FranchisesController {
                                 .build()));
     }
 
-    @GetMapping("/product/{idProduct}/stock/{stock}")
+    @PutMapping("/franchise/branch/product/{idProduct}/stock/{stock}")
     public Mono<ResponseEntity<ProductResponse>> updateStock(@PathVariable String idProduct,@PathVariable Integer stock ) {
         return productService.updateStock(idProduct, stock)
         .map(createdProduct -> ResponseEntity.status(HttpStatus.OK)
@@ -107,15 +111,15 @@ public class FranchisesController {
        
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/franchise/branch/product/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable("id") String productId) {
         productService.deleteProduct(Product.builder().id(productId).build());
         return ResponseEntity.ok().build(); 
     }
 
     private String generateUuId() {
-        UUID uuid = UUID.randomUUID();
-        return uuid.toString();
+
+        return UUID.randomUUID().toString();
     }
 
 }

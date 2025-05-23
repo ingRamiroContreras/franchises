@@ -1,0 +1,18 @@
+<configuration>
+
+    <!-- Define un encoder para el patrón de logs -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Nivel de Logging raíz -->
+    <root level="DEBUG">
+        <appender-ref ref="CONSOLE" />
+    </root>
+
+    <!-- Puedes definir niveles específicos para paquetes -->
+    <logger name="com.nequi" level="DEBUG" />
+
+</configuration>

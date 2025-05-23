@@ -9,7 +9,6 @@ import com.nequi.franchise.infraestructure.jpa.ProductJpaRepository;
 
 import jakarta.transaction.Transactional;
 
-import java.util.List;
 
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
@@ -31,7 +30,7 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public Mono<Void> delete(Product product) {
-        productJpaRepository.delete(toJpaEntity(product));
+        productJpaRepository.deleteById(product.getId());
         return Mono.empty();
     }
 
@@ -50,6 +49,7 @@ public class ProductRepositoryImpl implements ProductRepository {
                 .id(product.getId())
                 .name(product.getName())
                 .branch(toJpaEntity(product.getBranch()))
+                .stock(product.getStock())
                 .build();
     }
 
@@ -59,6 +59,7 @@ public class ProductRepositoryImpl implements ProductRepository {
                 .id(productEntity.getId())
                 .name(productEntity.getName())
                 .branch(toDomainEntity(productEntity.getBranch()))
+                .stock(productEntity.getStock())
                 .build();
     }
 
