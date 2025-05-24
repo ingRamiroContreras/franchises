@@ -1,5 +1,6 @@
-[object Object]AWSTemplateFormatVersion: '2010-09-09'
-Description: 'API Gateway with Load Balancer, EC2 Auto Scaling Group in private subnets, and MySQL RDS'
+AWSTemplateFormatVersion: '2010-09-09'
+Description: API Gateway with Load Balancer, EC2 Auto Scaling Group in private
+  subnets, and MySQL RDS
 
 Parameters:
   InstanceType:
@@ -39,7 +40,9 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref NequiVPC
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
 
@@ -47,7 +50,9 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref NequiVPC
-      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      AvailabilityZone: !Select
+        - 1
+        - !GetAZs ''
       CidrBlock: 10.0.2.0/24
       MapPublicIpOnLaunch: true
 
@@ -55,7 +60,9 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref NequiVPC
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
       CidrBlock: 10.0.3.0/24
       MapPublicIpOnLaunch: false
 
@@ -63,43 +70,153 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref NequiVPC
-      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      AvailabilityZone: !Select
+        - 1
+        - !GetAZs ''
       CidrBlock: 10.0.4.0/24
       MapPublicIpOnLaunch: false
 
-  # Internet Gateway
+  PrivateSubnetDB1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref NequiVPC
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
+      CidrBlock: 10.0.5.0/24
+
+  PrivateSubnetDB2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref NequiVPC
+      AvailabilityZone: !Select
+        - 1
+        - !GetAZs ''
+      CidrBlock: 10.0.6.0/24
+
+  # Nat Gateway
+  NatEIP1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  NatEIP2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP1.AllocationId
+      SubnetId: !Ref PublicSubnet1
+
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP2.AllocationId
+      SubnetId: !Ref PublicSubnet2
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref NequiVPC
+
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref NequiVPC
+
+  PrivateRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway1
+
+  PrivateRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway2
+
+  SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable1
+
+  SubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable2
+
+  # Crear un IGW
   InternetGateway:
     Type: AWS::EC2::InternetGateway
 
-  AttachGateway:
+  # Asociar el IGW a tu VPC
+  VPCGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref NequiVPC
       InternetGatewayId: !Ref InternetGateway
 
-  # NAT Gateway
-  NatGatewayEIP:
-    Type: AWS::EC2::EIP
-    DependsOn: AttachGateway
-    Properties:
-      Domain: vpc
-
-  NatGateway:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt NatGatewayEIP.AllocationId
-      SubnetId: !Ref PublicSubnet1
-
-  # Route Tables
-  PublicRouteTable:
+  # Crear la tabla de rutas para la subred pública
+  PublicSubnetRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref NequiVPC
 
+  # Asociar la subred pública a esa tabla
+  PublicSubnetAssociations:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicSubnetRouteTable
+
+  # Crear la ruta por default hacia el IGW
   PublicRoute:
     Type: AWS::EC2::Route
-    DependsOn: AttachGateway
+    DependsOn: VPCGatewayAttachment
     Properties:
-      RouteTableId: !Ref PublicRouteTable
+      RouteTableId: !Ref PublicSubnetRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
+
+  MySQLDatabase:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: 20 # GB, apto para capa gratuita
+      DBInstanceClass: !Ref DBInstanceClass
+      Engine: MySQL
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      DBName: !Ref DBName
+      VPCSecurityGroups:
+        - !Ref MyDBSecurityGroup  # Asegúrate de tenerlo definido
+      DBSubnetGroupName: !Ref MyDBSubnetGroup
+  
+  MyDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnets for RDS
+      SubnetIds:
+        - !Ref PrivateSubnetDB1
+        - !Ref PrivateSubnetDB2
+
+  MyDBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for RDS MySQL allowing access from app servers
+      VpcId: !Ref NequiVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          # Permitir desde la VPC o desde los recursos específicos (ejemplo)
+          CidrIp: 10.0.0.0/16
+          # O, si quieres restringir a un grupo de seguridad específico, usa:
+          # SourceSecurityGroupId: !Ref AppServerSecurityGroup
