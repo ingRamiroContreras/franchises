@@ -51,6 +51,6 @@ spring:
       on-profile: prod
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://your-aws-mysql-endpoint:3306/your-database-name
-    username: your-mysql-username
-    password: your-mysql-password
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASS}
