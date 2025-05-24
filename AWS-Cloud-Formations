@@ -22,6 +22,13 @@ Parameters:
     Type: String
     NoEcho: true
     Description: Database admin password
+  SpringProfile:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+    Description: "Environment profile for Spring Boot"
 
 Resources:
   # VPC y subredes
@@ -216,7 +223,86 @@ Resources:
         - IpProtocol: tcp
           FromPort: 3306
           ToPort: 3306
-          # Permitir desde la VPC o desde los recursos específicos (ejemplo)
-          CidrIp: 10.0.0.0/16
-          # O, si quieres restringir a un grupo de seguridad específico, usa:
-          # SourceSecurityGroupId: !Ref AppServerSecurityGroup
+          SourceSecurityGroupId: !Ref InstanceSecurityGroup
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security for Auto Scaling Group instances
+      VpcId: !Ref NequiVPC  # Replace with your VPC reference
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0  # For production, restrict to specific IPs
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  MyLaunchRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        
+  MyLaunchRoleProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref MyLaunchRole
+
+  MyLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: MiLaunchTemplate
+      LaunchTemplateData:
+        ImageId: ami-06c8f2ec674c67112   # AMI compatible
+        InstanceType: !Ref InstanceType
+        IamInstanceProfile:
+          Name: !Ref MyLaunchRoleProfile
+        SecurityGroupIds:
+          - !Ref InstanceSecurityGroup
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            yum update -y
+            yum install -y git docker
+            systemctl start docker
+            
+            # Crear archivo .env con el perfil pasado como parámetro
+            echo "SPRING_PROFILES_ACTIVE=${SpringProfile}" > /home/ec2-user/.env
+            
+            # Clonar tu repo (esto lo haces solo si quieres)
+            git clone https://github.com/ingRamiroContreras/franchises.git /opt/franchises
+            
+            # Ir al directorio y levantar docker-compose
+            cd /opt/franchises
+            
+            # Levantar la app
+            docker compose up -d
+
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      LaunchTemplate:
+        LaunchTemplateId: !Ref MyLaunchTemplate
+        Version: !GetAtt MyLaunchTemplate.LatestVersionNumber
+      MinSize: 1
+      MaxSize: 3
+      DesiredCapacity: 2

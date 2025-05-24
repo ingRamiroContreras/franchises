@@ -52,5 +52,5 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://your-aws-mysql-endpoint:3306/your-database-name
-    username: 
+    username: your-mysql-username
     password: your-mysql-password
