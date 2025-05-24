@@ -278,76 +278,80 @@ Resources:
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
-
-            # Redirige toda la salida estándar y de errores al archivo de log /var/log/userdata.log
             exec > /var/log/userdata.log 2>&1
 
             echo "Iniciando script de configuración..."
 
-            # Actualiza todos los paquetes del sistema
-            echo "Actualizando paquetes del sistema..."
+            # Mostrar los parámetros que recibe
+            echo "DBName: ${DBName}"
+            echo "DBUsername: ${DBUsername}"
+            echo "DBPassword: ${DBPassword}"
+            echo "SpringProfile: ${SpringProfile}"
+
+            # Actualiza todos los paquetes
             yum update -y
 
-            # Instala herramientas necesarias: git, docker, wget, tar
-            echo "Instalando git, docker, wget, tar..."
+            # Instala herramientas
             yum install -y git docker wget tar
 
-            # Instala Amazon Corretto Java 17
-            echo "Instalando Amazon Corretto Java 17..."
+            # Instala Java 17
             yum install -y java-17-amazon-corretto
 
-            # Habilita y arranca el servicio de Docker
-            echo "Habilitando y arrancando Docker..."
+            # Inicia Docker
             systemctl enable docker
             systemctl start docker
 
-            # Espera a que Docker esté listo
-            echo "Esperando a que Docker esté listo..."
+            # Espera Docker listo
             while ! docker info > /dev/null 2>&1; do sleep 1; done
-            echo "Docker listo."
 
             # Descarga Docker Compose
-            echo "Descargando Docker Compose..."
             curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             chmod +x /usr/local/bin/docker-compose
 
-            # Crear archivo .env
-            echo "Creando archivo .env..."
-            echo "SPRING_PROFILES_ACTIVE=dev" > /home/ec2-user/.env
+            echo "Creando archivo .env con perfil ${SpringProfile}..."
+            echo "SPRING_PROFILES_ACTIVE=${SpringProfile}" > /home/ec2-user/.env
             chown ec2-user:ec2-user /home/ec2-user/.env
-
-            # Clonar el repositorio de GitHub
-            echo "Clonando repositorio de GitHub..."
+            
+            # Clona el repositorio
             git clone https://github.com/ingRamiroContreras/franchises.git /opt/franchises
 
-            # Entra en el directorio del proyecto
+            # Entra en el directorio
             cd /opt/franchises
 
             # Definir HOME para Maven
             echo "Configurando variable HOME para Maven..."
             export HOME=/home/ec2-user
 
-            # Ejecuta Maven Wrapper para limpiar y construir el proyecto
-            echo "Construyendo el proyecto con Maven..."
-            ./mvnw clean package
+            # Exporta los parámetros para Docker
+            echo "Exportando variables..."
+            export DB_NAME=${DBName}
+            export DB_USER=${DBUsername}
+            export DB_PASS=${DBPassword}
+            export SPRING_PROFILE=${SpringProfile}
+            # Si tienes host/puerto a definir, también
+            export DB_HOST="${MySQLDatabase.Endpoint.Address}"
 
-            # Verifica que el JAR se generó
-            echo "Verificando que el JAR se generó..."
+            # Muestra las variables exportadas
+            echo "DB_NAME: $DB_NAME"
+            echo "DB_USER: $DB_USER"
+            echo "DB_PASS: $DB_PASS"
+            echo "SPRING_PROFILE: $SPRING_PROFILE"
+
+            # Construye
+            ./mvnw clean package
             ls -l target/
 
-            # Si el JAR no aparece, advierte
             if [ ! -f target/franchises-0.0.1-SNAPSHOT.jar ]; then
-                echo "NO se encontró el archivo JAR esperado en target/. Revisa la compilación de Maven."
+              echo "NO se encontró el JAR."
             else
-                echo "Archivo JAR encontrado en target/."
+              echo "Archivo JAR listo."
             fi
 
-            # Inicia los servicios con Docker Compose
+            # Ejecuta docker-compose
             echo "Iniciando Docker Compose..."
             docker-compose up -d
 
-            echo "Script completado."
-
+            echo "Script finalizado."
 
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
