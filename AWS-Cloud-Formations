@@ -278,21 +278,28 @@ Resources:
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
+            exec > /var/log/userdata.log 2>&1
             yum update -y
-            yum install -y git docker
+            yum install -y git docker wget tar
+            yum install -y java-17-amazon-corretto
+            systemctl enable docker
             systemctl start docker
-            
-            # Crear archivo .env con el perfil pasado como parámetro
+            # Esperar a que Docker esté listo
+            while ! docker info > /dev/null 2>&1; do sleep 1; done
+            # Instalar Docker Compose
+            curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            chmod +x /usr/local/bin/docker-compose
+            # Crear archivo .env
             echo "SPRING_PROFILES_ACTIVE=${SpringProfile}" > /home/ec2-user/.env
-            
-            # Clonar tu repo (esto lo haces solo si quieres)
+            chown ec2-user:ec2-user /home/ec2-user/.env
+            # Clonar repo
             git clone https://github.com/ingRamiroContreras/franchises.git /opt/franchises
-            
-            # Ir al directorio y levantar docker-compose
             cd /opt/franchises
-            
-            # Levantar la app
-            docker compose up -d
+            # construir app con Maven
+            ./mvnw clean package
+            # levantarse con docker compose
+            docker-compose up -d
+
 
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
