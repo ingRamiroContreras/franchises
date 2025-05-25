@@ -51,7 +51,7 @@ Resources:
         - 0
         - !GetAZs ''
       CidrBlock: 10.0.1.0/24
-      MapPublicIpOnLaunch: true
+      MapPublicIpOnLaunch: false
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -61,7 +61,7 @@ Resources:
         - 1
         - !GetAZs ''
       CidrBlock: 10.0.2.0/24
-      MapPublicIpOnLaunch: true
+      MapPublicIpOnLaunch: false
 
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
@@ -178,10 +178,16 @@ Resources:
       VpcId: !Ref NequiVPC
 
   # Asociar la subred pública a esa tabla
-  PublicSubnetAssociations:
+  PublicSubnetAssociations1:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicSubnetRouteTable
+
+  PublicSubnetAssociations2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2  # Asociar PublicSubnet2
       RouteTableId: !Ref PublicSubnetRouteTable
 
   # Crear la ruta por default hacia el IGW
@@ -192,6 +198,8 @@ Resources:
       RouteTableId: !Ref PublicSubnetRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
+
+  # Crear la base de datos MySQL
 
   MySQLDatabase:
     Type: AWS::RDS::DBInstance
@@ -243,6 +251,12 @@ Resources:
           FromPort: 443
           ToPort: 443
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+
+  # creacion de role para poder conectarme por ssm a la instancia ec2
 
   MyLaunchRole:
     Type: AWS::IAM::Role
@@ -263,6 +277,8 @@ Resources:
       Path: /
       Roles:
         - !Ref MyLaunchRole
+
+  # Crear el Launch Template
 
   MyLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
@@ -311,7 +327,7 @@ Resources:
             echo "Creando archivo .env con perfil ${SpringProfile}..."
             echo "SPRING_PROFILES_ACTIVE=${SpringProfile}" > /home/ec2-user/.env
             chown ec2-user:ec2-user /home/ec2-user/.env
-            
+
             # Clona el repositorio
             git clone https://github.com/ingRamiroContreras/franchises.git /opt/franchises
 
@@ -353,6 +369,7 @@ Resources:
 
             echo "Script finalizado."
 
+
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
@@ -365,3 +382,62 @@ Resources:
       MinSize: 1
       MaxSize: 3
       DesiredCapacity: 2
+      TargetGroupARNs:
+        - !Ref AppTargetGroup
+      HealthCheckType: ELB
+      HealthCheckGracePeriod: 300
+
+
+  # Crear el Load Balancer
+
+  AppLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: my-alb
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Scheme: internet-facing
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP traffic to ALB
+      VpcId: !Ref NequiVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+
+  # Crear el Target Group
+  # y el Listener para el Load Balancer
+  # y el Target Group para el Auto Scaling Group
+
+  AppTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: app-target-group
+      Port: 8080
+      Protocol: HTTP
+      VpcId: !Ref NequiVPC
+      HealthCheckProtocol: HTTP
+      HealthCheckPort: '8080'
+      HealthCheckPath: /health  # ajusta si quieres otro path
+      Matcher:
+        HttpCode: 200-399
+  
+  AppListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref AppLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref AppTargetGroup
+
+  

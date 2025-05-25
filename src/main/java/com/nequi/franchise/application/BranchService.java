@@ -8,4 +8,5 @@ import reactor.core.publisher.Mono;
 
 public interface BranchService {
     Mono<Branch> createBranch(Branch branch);
+    public Mono<Branch> getBranchById(String id);
 }

@@ -8,4 +8,5 @@ public interface ProductService {
     Mono<Product> createProduct(Product product);
     Mono<Void> deleteProduct(Product product);
     Mono<Product> updateStock(String product, Integer stockValue);
+    Mono<Product> getProductById(String id);
 }

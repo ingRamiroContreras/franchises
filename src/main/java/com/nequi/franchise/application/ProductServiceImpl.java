@@ -31,5 +31,9 @@ public class ProductServiceImpl implements ProductService {
     public Mono<Product> updateStock(String product, Integer stockValue) {
         return this.productRepository.updateStock(product, stockValue);
     }
+    @Override
+    public Mono<Product> getProductById(String id) {
+        return productRepository.findById(id);
+    }
 
 }

@@ -21,5 +21,8 @@ public class BranchServiceImpl implements BranchService {
         return branchRepository.save(branch);
 
     }
-
+    @Override
+    public Mono<Branch> getBranchById(String id) {
+        return branchRepository.findById(id);
+    }
 }

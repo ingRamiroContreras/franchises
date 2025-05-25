@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import com.nequi.franchise.domain.Franchise;
 import com.nequi.franchise.domain.FranchiseRepository;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -21,5 +22,15 @@ public class FranchiseServiceImpl implements FranchiseService {
         return franchiseRepository.save(franchise);
 
     }
+
+    @Override
+    public Mono<Franchise> getFranchiseById(String id) {
+        return franchiseRepository.findById(id);
+    }
+
+     @Override
+     public Flux<Franchise> getAllFranchises() {
+        return franchiseRepository.findAll();
+     }
 
 }

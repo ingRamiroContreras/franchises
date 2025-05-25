@@ -18,6 +18,12 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     private ProductJpaRepository productJpaRepository;
 
+    @Override
+    public Mono<Product> findById(String id) {
+        var response = productJpaRepository.findById(id).get();
+        return Mono.just(toDomainEntity(response));
+    }
+
     public ProductRepositoryImpl(ProductJpaRepository ProductJpaRepository) {
         this.productJpaRepository = ProductJpaRepository;
     }

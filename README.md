@@ -2,7 +2,7 @@
 
 ```sql
 
-conectarse a la  BD desde EC2 sudo docker run -it --rm mysql:8.0 mysql -h nequi-mysqldatabase-r6qxakeauysp.c7g04ay8o057.us-east-2.rds.amazonaws.com -P 3306 -u admin -p
+conectarse a la  BD desde EC2 sudo docker run -it --rm mysql:8.0 mysql -h nequi-mysqldatabase-6euejcsde5zf.c7g04ay8o057.us-east-2.rds.amazonaws.com -P 3306 -u admin -p
 
 SHOW DATABASES;
 

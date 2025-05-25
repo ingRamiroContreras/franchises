@@ -8,6 +8,7 @@ import com.nequi.franchise.infraestructure.entities.FranchiseEntity;
 import com.nequi.franchise.infraestructure.jpa.BranchJpaRepository;
 
 import org.springframework.stereotype.Repository;
+
 import reactor.core.publisher.Mono;
 
 @Repository
@@ -23,6 +24,13 @@ public class BranchRepositoryImpl implements BranchRepository {
     public Mono<Branch> save(Branch branch) {
         var branchEntity = branchJpaRepository.saveAndFlush(toJpaEntity(branch));
         return Mono.just(branchEntity).map(this::toDomainEntity);
+    }
+    @Override
+    public Mono<Branch> findById(String id) {
+        return Mono.fromCallable(() -> branchJpaRepository.findById(id))
+                .flatMap(optionalEntity -> optionalEntity
+                        .map(entity -> Mono.just(toDomainEntity(entity)))
+                        .orElseGet(Mono::empty));
     }
 
     private BranchEntity toJpaEntity(Branch branch) {
