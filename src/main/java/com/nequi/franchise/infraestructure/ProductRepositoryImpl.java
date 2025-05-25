@@ -63,8 +63,10 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
-    public List<ProductEntity> findProductsWithMaxStockByFranchise(@Param("franchiseId") String franchiseId) {
-        return productJpaRepository.findProductsWithMaxStockByFranchise(franchiseId);
+    public List<Product> findProductsWithMaxStockByFranchise(@Param("franchiseId") String franchiseId) {
+        return productJpaRepository.findProductsWithMaxStockByFranchise(franchiseId).stream()
+                        .map(this::toDomainEntity)
+                        .toList();
     }
 
     private ProductEntity toJpaEntity(Product product) {

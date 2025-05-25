@@ -1,6 +1,6 @@
 package com.nequi.franchise.app.controller;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -14,6 +14,7 @@ import com.nequi.franchise.app.dto.BranchRequest;
 import com.nequi.franchise.app.dto.BranchResponse;
 import com.nequi.franchise.app.dto.FranchisesRequest;
 import com.nequi.franchise.app.dto.FranchisesResponse;
+import com.nequi.franchise.app.dto.ProductMaxStockResponse;
 import com.nequi.franchise.app.dto.ProductRequest;
 import com.nequi.franchise.app.dto.ProductResponse;
 import com.nequi.franchise.application.BranchService;
@@ -169,7 +170,7 @@ public class FranchisesController {
                 if (product.getStock() == stock) {
                         return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
                 }
-               
+
                 Product updatedProduct = productService.updateStock(idProduct, stock);
                 return ResponseEntity.ok(ProductResponse.builder()
                                 .name(updatedProduct.getName())
@@ -188,6 +189,69 @@ public class FranchisesController {
         private String generateUuId() {
 
                 return UUID.randomUUID().toString();
+        }
+
+        public List<ProductMaxStockResponse> getProductsWithMaxStockByFranchise(@PathVariable String franchiseId) {
+                List<Product> products = productService.findProductsWithMaxStockByFranchise(franchiseId);
+
+                if (products == null || products.isEmpty()) {
+                        return List.of();
+                }
+
+                return products.stream()
+                                .map(prod -> ProductMaxStockResponse.builder()
+                                                .productId(prod.getId())
+                                                .productName(prod.getName())
+                                                .stock(prod.getStock())
+                                                .branchId(prod.getBranch().getId())
+                                                .branchName(prod.getBranch().getName())
+                                                .build())
+                                .toList();
+        }
+
+        @GetMapping("/franchise")
+        public List<FranchisesResponse> getFranchises() {
+                List<Franchise> franchise = franchiseService.getAllFranchises();
+                if (franchise != null) {
+                        return franchise.stream()
+                                        .map(franch -> FranchisesResponse.builder()
+                                                        .name(franch.getName())
+                                                        .id(franch.getId())
+                                                        .build())
+                                        .toList();
+                } else {
+                        return List.of();
+                }
+        }
+
+        @GetMapping("/franchise/branch")
+        public List<BranchResponse> getBranches() {
+                List<Branch> franchise = branchService.getAllBranches();
+                if (franchise != null) {
+                        return franchise.stream()
+                                        .map(franch -> BranchResponse.builder()
+                                                        .name(franch.getName())
+                                                        .id(franch.getId())
+                                                        .build())
+                                        .toList();
+                } else {
+                        return List.of();
+                }
+        }
+
+        @GetMapping("/franchise/branch/product")
+        public List<ProductResponse> getProducts() {
+                List<Product> franchise = productService.getAllProducts();
+                if (franchise != null) {
+                        return franchise.stream()
+                                        .map(franch -> ProductResponse.builder()
+                                                        .name(franch.getName())
+                                                        .id(franch.getId())
+                                                        .build())
+                                        .toList();
+                } else {
+                        return List.of();
+                }
         }
 
 }

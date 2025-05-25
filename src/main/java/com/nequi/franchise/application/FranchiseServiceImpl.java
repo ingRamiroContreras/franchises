@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import com.nequi.franchise.domain.Franchise;
 import com.nequi.franchise.domain.FranchiseRepository;
 
-
 @Service
 public class FranchiseServiceImpl implements FranchiseService {
 
@@ -28,9 +27,9 @@ public class FranchiseServiceImpl implements FranchiseService {
         return franchiseRepository.findById(id);
     }
 
-     @Override
-     public List<Franchise> getAllFranchises() {
+    @Override
+    public List<Franchise> getAllFranchises() {
         return franchiseRepository.findAll();
-     }
+    }
 
 }

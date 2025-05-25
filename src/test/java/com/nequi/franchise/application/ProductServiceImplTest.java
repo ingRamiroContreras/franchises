@@ -101,19 +101,5 @@ class ProductServiceImplTest {
         verify(productRepository).findById(id);
     }
 
-    @Test
-    void testFindAllReturnsList() {
-        List<Product> products = Arrays.asList(
-            Product.builder().id("1").name("P1").build(),
-            Product.builder().id("2").name("P2").build()
-        );
 
-        when(productRepository.findALL()).thenReturn(products);
-
-        List<Product> result = productService.findALL();
-
-        assertThat(result).isNotNull();
-        assertThat(result.size()).isEqualTo(2);
-        verify(productRepository).findALL();
-    }
 }

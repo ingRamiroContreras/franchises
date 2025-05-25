@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 
 import com.nequi.franchise.domain.Product;
 import com.nequi.franchise.domain.ProductRepository;
-import com.nequi.franchise.infraestructure.entities.ProductEntity;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -39,14 +38,15 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> findALL() {
+    public List<Product> getAllProducts() {
         return productRepository.findALL();
 
     }
 
     @Override
-    public List<ProductEntity> findProductsWithMaxStockByFranchise(String franchiseId) {
+    public List<Product> findProductsWithMaxStockByFranchise(String franchiseId) {
         return findProductsWithMaxStockByFranchise(franchiseId);
     }
+
 
 }
