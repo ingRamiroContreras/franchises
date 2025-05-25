@@ -1,8 +1,9 @@
 package com.nequi.franchise.domain;
 
-import reactor.core.publisher.Mono;
+import java.util.List;
 
 public interface BranchRepository {
-    Mono<Branch> save(Branch branch);
-    Mono<Branch> findById(String id);
+    public Branch save(Branch branch);
+    public Branch findById(String id);
+    public List<Branch> findALL();
 }

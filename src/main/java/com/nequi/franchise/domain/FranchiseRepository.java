@@ -1,10 +1,11 @@
 package com.nequi.franchise.domain;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import java.util.List;
+
 
 public interface FranchiseRepository {
-    Mono<Franchise> save(Franchise franchise);
-    Flux<Franchise> findAll();
-    Mono<Franchise> findById(String id);
+    public Franchise save(Franchise franchise);
+    public List<Franchise> findAll();
+    public Franchise findById(String id);
+    public List<Franchise> findALL();
 }

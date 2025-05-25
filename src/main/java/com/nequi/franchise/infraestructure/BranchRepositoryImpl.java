@@ -7,6 +7,10 @@ import com.nequi.franchise.infraestructure.entities.BranchEntity;
 import com.nequi.franchise.infraestructure.entities.FranchiseEntity;
 import com.nequi.franchise.infraestructure.jpa.BranchJpaRepository;
 
+import java.util.List;
+
+import javax.management.RuntimeErrorException;
+
 import org.springframework.stereotype.Repository;
 
 import reactor.core.publisher.Mono;
@@ -21,16 +25,25 @@ public class BranchRepositoryImpl implements BranchRepository {
     }
 
     @Override
-    public Mono<Branch> save(Branch branch) {
+    public Branch save(Branch branch) {
         var branchEntity = branchJpaRepository.saveAndFlush(toJpaEntity(branch));
-        return Mono.just(branchEntity).map(this::toDomainEntity);
+        return toDomainEntity(branchEntity);
     }
+
     @Override
-    public Mono<Branch> findById(String id) {
-        return Mono.fromCallable(() -> branchJpaRepository.findById(id))
-                .flatMap(optionalEntity -> optionalEntity
-                        .map(entity -> Mono.just(toDomainEntity(entity)))
-                        .orElseGet(Mono::empty));
+    public Branch findById(String id) {
+        return branchJpaRepository.findById(id)
+                .map(this::toDomainEntity)
+                .orElseThrow(() -> new RuntimeException("Branch not found"));
+    }
+
+    @Override
+    public List<Branch> findALL() {
+        return branchJpaRepository.findAll()
+                        .stream()
+                        .map(this::toDomainEntity)
+                        .toList();
+
     }
 
     private BranchEntity toJpaEntity(Branch branch) {

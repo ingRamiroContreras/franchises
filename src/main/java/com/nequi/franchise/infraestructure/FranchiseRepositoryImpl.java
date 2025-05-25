@@ -2,14 +2,15 @@ package com.nequi.franchise.infraestructure;
 
 import com.nequi.franchise.domain.Franchise;
 import com.nequi.franchise.domain.FranchiseRepository;
+import com.nequi.franchise.domain.Product;
 import com.nequi.franchise.infraestructure.entities.FranchiseEntity;
 
 import com.nequi.franchise.infraestructure.jpa.FranchiseJpaRepository;
 
+import java.util.List;
+
 import org.springframework.stereotype.Repository;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 @Repository
 public class FranchiseRepositoryImpl implements FranchiseRepository {
@@ -21,23 +22,34 @@ public class FranchiseRepositoryImpl implements FranchiseRepository {
     }
 
     @Override
-    public Mono<Franchise> save(Franchise franchise) {
-        var franchiseEntity = franchiseJpaRepository.saveAndFlush(toJpaEntity(franchise));
-        return Mono.just(franchiseEntity).map(this::toDomainEntity);
+    public Franchise save(Franchise franchise) {
+        return toDomainEntity(franchiseJpaRepository.saveAndFlush(toJpaEntity(franchise)));
+
     }
 
     @Override
-    public Mono<Franchise> findById(String id) {
-        return Mono.fromCallable(() -> franchiseJpaRepository.findById(id))
-                .flatMap(optionalEntity -> optionalEntity
-                        .map(entity -> Mono.just(toDomainEntity(entity)))
-                        .orElseGet(Mono::empty));
+    public Franchise findById(String id) {
+        return franchiseJpaRepository.findById(id)
+                .map(this::toDomainEntity)
+                .orElseThrow(() -> new RuntimeException("Franchise not found"));
+
     }
 
     @Override
-    public Flux<Franchise> findAll() {
-        return Flux.fromIterable(franchiseJpaRepository.findAll())
-                .map(this::toDomainEntity);
+    public List<Franchise> findALL() {
+        return franchiseJpaRepository.findAll()
+                        .stream()
+                        .map(this::toDomainEntity)
+                        .toList();
+
+    }
+
+    @Override
+    public List<Franchise> findAll() {
+        return franchiseJpaRepository.findAll()
+                .stream()
+                .map(this::toDomainEntity)
+                .toList();
     }
 
     private FranchiseEntity toJpaEntity(Franchise franchise) {
@@ -48,7 +60,6 @@ public class FranchiseRepositoryImpl implements FranchiseRepository {
     }
 
     private Franchise toDomainEntity(FranchiseEntity franchiseEntity) {
-
         return Franchise.builder()
                 .id(franchiseEntity.getId())
                 .name(franchiseEntity.getName())

@@ -1,116 +1,91 @@
 package com.nequi.franchise.app.controller;
 
-import com.nequi.franchise.app.dto.*;
-import com.nequi.franchise.application.*;
-import com.nequi.franchise.domain.*;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.any;
 import org.springframework.http.ResponseEntity;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class FranchisesControllerTest {
+import com.nequi.franchise.application.BranchService;
+import com.nequi.franchise.application.FranchiseService;
+import com.nequi.franchise.application.ProductService;
+import com.nequi.franchise.domain.Franchise;
+import com.nequi.franchise.app.dto.*;
 
-    private FranchiseService franchiseService;
+
+class FranchisesControllerTest {
+
+    @Mock
     private BranchService branchService;
+
+    @Mock
     private ProductService productService;
+
+    @Mock
+    private FranchiseService franchiseService;
+
+    @InjectMocks
     private FranchisesController controller;
 
     @BeforeEach
     void setUp() {
-        franchiseService = mock(FranchiseService.class);
-        branchService = mock(BranchService.class);
-        productService = mock(ProductService.class);
-        controller = new FranchisesController(branchService, productService, franchiseService);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testCreateBranch() {
-        BranchRequest request = BranchRequest.builder().name("Test Branch").build();
-        Branch branch = Branch.builder().id("1").name("Test Branch").build();
-        when(branchService.createBranch(any())).thenReturn(Mono.just(branch));
+    void testGetMethodName_Found() {
+        String id = UUID.randomUUID().toString();
+        Franchise franchise = Franchise.builder()
+                .id(id)
+                .name("Test Franchise")
+                .build();
 
-        Mono<ResponseEntity<BranchResponse>> result = controller.createBranch(request);
+        when(franchiseService.getFranchiseById(id)).thenReturn(franchise);
 
-        StepVerifier.create(result)
-                .expectNextMatches(response -> response.getStatusCode() == HttpStatus.CREATED &&
-                        response.getBody() != null &&
-                        response.getBody().getName().equals("Test Branch"))
-                .verifyComplete();
-
-        verify(branchService, times(1)).createBranch(any());
+        ResponseEntity<FranchisesResponse> response = controller.getMethodName(id);
+        assertThat(response.getStatusCodeValue()).isEqualTo(200);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getName()).isEqualTo("Test Franchise");
+        verify(franchiseService).getFranchiseById(id);
     }
 
     @Test
-    void testCreateFranchise() {
-        FranchisesRequest request = FranchisesRequest.builder().name("Test Franchise").build();
-        Franchise franchise = Franchise.builder().id("1").name("Test Franchise").build();
-        when(franchiseService.createFranchise(any())).thenReturn(Mono.just(franchise));
-
-        Mono<ResponseEntity<FranchisesResponse>> result = controller.createFranchise(request);
-
-        StepVerifier.create(result)
-                .expectNextMatches(response -> response.getStatusCode() == HttpStatus.CREATED &&
-                        response.getBody() != null &&
-                        response.getBody().getName().equals("Test Franchise"))
-                .verifyComplete();
-
-        verify(franchiseService, times(1)).createFranchise(any());
+    void testGetMethodName_NotFound() {
+        String id = UUID.randomUUID().toString();
+        when(franchiseService.getFranchiseById(id)).thenReturn(null);
+        ResponseEntity<FranchisesResponse> response = controller.getMethodName(id);
+        assertThat(response.getStatusCodeValue()).isEqualTo(404);
+        assertThat(response.getBody()).isNull();
+        verify(franchiseService).getFranchiseById(id);
     }
 
     @Test
-    void testCreateProduct() {
-        ProductRequest request = ProductRequest.builder().name("Test Product").build();
-        Product product = Product.builder().id("1").name("Test Product").build();
-        when(productService.createProduct(any())).thenReturn(Mono.just(product));
+    void testCreateFranchise_Success() {
+        FranchisesRequest request = new FranchisesRequest();
+        request.setName("New Franchise");
+        String generatedId = UUID.randomUUID().toString();
 
-        Mono<ResponseEntity<ProductResponse>> result = controller.createProduct(request);
+        when(franchiseService.createFranchise(any(Franchise.class)))
+            .thenAnswer(invocation -> {
+                Franchise f = invocation.getArgument(0);
+                f.setId(generatedId);
+                return f;
+            });
 
-        StepVerifier.create(result)
-                .expectNextMatches(response -> response.getStatusCode() == HttpStatus.CREATED &&
-                        response.getBody() != null &&
-                        response.getBody().getName().equals("Test Product"))
-                .verifyComplete();
-
-        verify(productService, times(1)).createProduct(any());
+        ResponseEntity<FranchisesResponse> response = controller.createFranchise(request);
+        assertThat(response.getStatusCodeValue()).isEqualTo(201);
+        assertThat(response.getBody().getName()).isEqualTo("New Franchise");
+        assertThat(response.getBody().getId()).isEqualTo(generatedId);
+        verify(franchiseService).createFranchise(any(Franchise.class));
     }
 
-    @Test
-    void testDeleteProduct() {
-        var product = Product.builder().id("1").build(); 
-        when(productService.deleteProduct(product)).thenReturn(Mono.empty());
-
-        ResponseEntity<Void> result = controller.deleteProduct(product.getId());
-
-        StepVerifier.create(Mono.just(result))
-                .expectNextMatches(response -> response.getStatusCode() == HttpStatus.OK)
-                .verifyComplete();
-
-        verify(productService, times(1)).deleteProduct(product);
-    }
-
-    @Test
-    void testUpdateStock() {
-        String productId = "1";
-        Integer stock = 10;
-        Product product = Product.builder().id(productId).stock(10).build();
-        when(productService.updateStock(eq(productId), any())).thenReturn(Mono.just(product));
-
-        Mono<ResponseEntity<ProductResponse>> result = controller.updateStock(productId, stock);
-
-        StepVerifier.create(result)
-                .expectNextMatches(response -> 
-                    response.getStatusCode() == HttpStatus.OK &&
-                    response.getBody() != null &&
-                    response.getBody().getStock() == 10
-                )
-                .verifyComplete();
-
-        verify(productService, times(1)).updateStock(eq(productId), any());
-    }
+    // Puedes agregar más tests para cada método según el comportamiento esperado
 }

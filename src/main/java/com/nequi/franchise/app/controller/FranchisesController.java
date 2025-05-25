@@ -1,5 +1,6 @@
 package com.nequi.franchise.app.controller;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -22,7 +23,6 @@ import com.nequi.franchise.domain.Branch;
 import com.nequi.franchise.domain.Franchise;
 import com.nequi.franchise.domain.Product;
 
-import reactor.core.publisher.Mono;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -45,75 +45,94 @@ public class FranchisesController {
         }
 
         @GetMapping("/franchise/{id}")
-        public Mono<ResponseEntity<FranchisesResponse>> getMethodName(@RequestParam String id) {
-                return franchiseService.getFranchiseById(id)
-                                .map(franchise -> ResponseEntity.ok(FranchisesResponse.builder()
-                                                .name(franchise.getName())
-                                                .id(franchise.getId())
-                                                .build()))
-                                .defaultIfEmpty(ResponseEntity.notFound().build());
+        public ResponseEntity<FranchisesResponse> getMethodName(@RequestParam String id) {
+                Franchise franchise = franchiseService.getFranchiseById(id);
+                if (franchise != null) {
+                        return ResponseEntity.ok(FranchisesResponse.builder()
+                                        .name(franchise.getName())
+                                        .id(franchise.getId())
+                                        .build());
+                } else {
+                        return ResponseEntity.notFound().build();
+                }
         }
 
         @GetMapping("/franchise/branch/{id}")
-        public Mono<ResponseEntity<BranchResponse>> getBranchById(@RequestParam String id) {
-                return branchService.getBranchById(id)
-                                .map(branch -> ResponseEntity.ok(BranchResponse.builder()
-                                                .name(branch.getName())
-                                                .id(branch.getId())
-                                                .franchise(branch.getFranchise())
-                                                .build()))
-                                .defaultIfEmpty(ResponseEntity.notFound().build());
+        public ResponseEntity<BranchResponse> getBranchById(@RequestParam String id) {
+                Branch branch = branchService.getBranchById(id);
+                if (branch != null) {
+                        return ResponseEntity.ok(BranchResponse.builder()
+                                        .name(branch.getName())
+                                        .id(branch.getId())
+                                        .franchise(branch.getFranchise())
+                                        .build());
+                } else {
+                        return ResponseEntity.notFound().build();
+                }
+
         }
 
         @GetMapping("/franchise/branch/product/{id}")
-        public Mono<ResponseEntity<ProductResponse>> getProductById(@RequestParam String id) {
-                return productService.getProductById(id)
-                                .map(product -> ResponseEntity.ok(ProductResponse.builder()
-                                                .name(product.getName())
-                                                .id(product.getId())
-                                                .branch(product.getBranch())
-                                                .stock(product.getStock())
-                                                .build()))
-                                .defaultIfEmpty(ResponseEntity.notFound().build());
+        public ResponseEntity<ProductResponse> getProductById(@RequestParam String id) {
+                Product product = productService.getProductById(id);
+                if (product != null) {
+                        return ResponseEntity.ok(ProductResponse.builder()
+                                        .name(product.getName())
+                                        .id(product.getId())
+                                        .branch(product.getBranch())
+                                        .stock(product.getStock())
+                                        .build());
+                } else {
+                        return ResponseEntity.notFound().build();
+                }
+
         }
 
         @PostMapping("/franchise")
-        public Mono<ResponseEntity<FranchisesResponse>> createFranchise(
+        public ResponseEntity<FranchisesResponse> createFranchise(
                         @RequestBody FranchisesRequest franchiseRequest) {
-                var franchise = Franchise.builder()
+                Franchise franchise = Franchise.builder()
                                 .name(franchiseRequest.getName())
                                 .id(generateUuId())
                                 .build();
-
-                return franchiseService.createFranchise(franchise)
-                                .map(createdFranchise -> ResponseEntity.status(HttpStatus.CREATED)
-                                                .body(FranchisesResponse.builder()
-                                                                .name(createdFranchise.getName())
-                                                                .id(createdFranchise.getId())
-                                                                .build()));
+                Franchise franchiseCreated = franchiseService.createFranchise(franchise);
+                if (franchiseCreated != null) {
+                        return ResponseEntity.status(HttpStatus.CREATED)
+                                        .body(FranchisesResponse.builder()
+                                                        .name(franchiseCreated.getName())
+                                                        .id(franchiseCreated.getId())
+                                                        .build());
+                } else {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                }
         }
 
         @PostMapping("/franchise/branch")
-        public Mono<ResponseEntity<BranchResponse>> createBranch(@RequestBody BranchRequest branchRequest) {
-                var branch = Branch.builder()
+        public ResponseEntity<BranchResponse> createBranch(@RequestBody BranchRequest branchRequest) {
+                Branch branch = Branch.builder()
                                 .name(branchRequest.getName())
                                 .id(generateUuId())
                                 .franchise(Franchise.builder()
                                                 .id(branchRequest.getFranchiseId())
                                                 .build())
                                 .build();
+                Branch branchResponse = branchService.createBranch(branch);
 
-                return branchService.createBranch(branch)
-                                .map(createdBranch -> ResponseEntity.status(HttpStatus.CREATED)
-                                                .body(BranchResponse.builder()
-                                                                .name(createdBranch.getName())
-                                                                .id(createdBranch.getId())
-                                                                .build()));
+                if (branchResponse != null) {
+                        return ResponseEntity.status(HttpStatus.CREATED)
+                                        .body(BranchResponse.builder()
+                                                        .name(branchResponse.getName())
+                                                        .id(branchResponse.getId())
+                                                        .franchise(branchResponse.getFranchise())
+                                                        .build());
+                } else {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                }
         }
 
         @PostMapping("/franchise/branch/product")
-        public Mono<ResponseEntity<ProductResponse>> createProduct(@RequestBody ProductRequest productRequest) {
-                var product = Product.builder()
+        public ResponseEntity<ProductResponse> createProduct(@RequestBody ProductRequest productRequest) {
+                Product product = Product.builder()
                                 .name(productRequest.getName())
                                 .branch(Branch.builder()
                                                 .id(productRequest.getBranchId())
@@ -122,28 +141,42 @@ public class FranchisesController {
                                 .id(generateUuId())
                                 .build();
 
-                return productService.createProduct(product)
-                                .map(createdProduct -> ResponseEntity.status(HttpStatus.CREATED)
-                                                .body(ProductResponse.builder()
-                                                                .name(createdProduct.getName())
-                                                                .id(createdProduct.getId())
-                                                                .branch(createdProduct.getBranch())
-                                                                .stock(createdProduct.getStock())
-                                                                .build()));
+                Product productResponse = productService.createProduct(product);
+                if (productResponse != null) {
+                        return ResponseEntity.status(HttpStatus.CREATED)
+                                        .body(ProductResponse.builder()
+                                                        .name(productResponse.getName())
+                                                        .id(productResponse.getId())
+                                                        .branch(productResponse.getBranch())
+                                                        .stock(productResponse.getStock())
+                                                        .build());
+                } else {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                }
         }
 
         @PutMapping("/franchise/branch/product/{idProduct}/stock/{stock}")
-        public Mono<ResponseEntity<ProductResponse>> updateStock(@PathVariable String idProduct,
+        public ResponseEntity<ProductResponse> updateStock(@PathVariable String idProduct,
                         @PathVariable Integer stock) {
-                return productService.updateStock(idProduct, stock)
-                                .map(createdProduct -> ResponseEntity.status(HttpStatus.OK)
-                                                .body(ProductResponse.builder()
-                                                                .name(createdProduct.getName())
-                                                                .id(createdProduct.getId())
-                                                                .branch(createdProduct.getBranch())
-                                                                .stock(createdProduct.getStock())
-                                                                .build()));
 
+                Product product = productService.getProductById(idProduct);
+                if (product == null) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                }
+                if (stock < 0) {
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                }
+                if (product.getStock() == stock) {
+                        return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+                }
+               
+                Product updatedProduct = productService.updateStock(idProduct, stock);
+                return ResponseEntity.ok(ProductResponse.builder()
+                                .name(updatedProduct.getName())
+                                .id(updatedProduct.getId())
+                                .branch(updatedProduct.getBranch())
+                                .stock(updatedProduct.getStock())
+                                .build());
         }
 
         @DeleteMapping("/franchise/branch/product/{id}")

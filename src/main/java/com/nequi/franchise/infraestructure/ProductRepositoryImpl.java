@@ -9,45 +9,62 @@ import com.nequi.franchise.infraestructure.jpa.ProductJpaRepository;
 
 import jakarta.transaction.Transactional;
 
+import java.util.List;
 
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
+
 
 @Repository
 public class ProductRepositoryImpl implements ProductRepository {
 
     private ProductJpaRepository productJpaRepository;
 
-    @Override
-    public Mono<Product> findById(String id) {
-        var response = productJpaRepository.findById(id).get();
-        return Mono.just(toDomainEntity(response));
-    }
 
     public ProductRepositoryImpl(ProductJpaRepository ProductJpaRepository) {
         this.productJpaRepository = ProductJpaRepository;
     }
 
     @Override
-    public Mono<Product> save(Product product) {
-        var productEntity = productJpaRepository.saveAndFlush(toJpaEntity(product));
-        return Mono.just(productEntity).map(this::toDomainEntity);
+    public Product findById(String id) {
+        return toDomainEntity(
+                productJpaRepository.findById(id).orElseThrow(() -> new RuntimeException("Franchise not found")));
+
     }
 
     @Override
-    public Mono<Void> delete(Product product) {
-        productJpaRepository.deleteById(product.getId());
-        return Mono.empty();
+    public List<Product> findALL() {
+        return productJpaRepository.findAll()
+                        .stream()
+                        .map(this::toDomainEntity)
+                        .toList();
+
     }
+
+    @Override
+    public Product save(Product product) {
+        return  toDomainEntity(productJpaRepository.saveAndFlush(toJpaEntity(product)));
+    }
+
+    @Override
+    public void delete(Product product) {
+        productJpaRepository.deleteById(product.getId());
+    }
+
+
 
     @Override
     @Transactional
-    public Mono<Product> updateStock(String productId, Integer newStock) {
+    public Product updateStock(String productId, Integer newStock) {
         ProductEntity product = productJpaRepository.findById(productId).get();
-        
         product.setStock(newStock);
         var productWithNewStock = productJpaRepository.saveAndFlush(product);
-        return Mono.just(toDomainEntity(productWithNewStock));
+        return toDomainEntity(productWithNewStock);
+    }
+
+    @Override
+    public List<ProductEntity> findProductsWithMaxStockByFranchise(@Param("franchiseId") String franchiseId) {
+        return productJpaRepository.findProductsWithMaxStockByFranchise(franchiseId);
     }
 
     private ProductEntity toJpaEntity(Product product) {

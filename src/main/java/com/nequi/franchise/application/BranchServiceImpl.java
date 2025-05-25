@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import com.nequi.franchise.domain.Branch;
 import com.nequi.franchise.domain.BranchRepository;
 
-import reactor.core.publisher.Mono;
 
 @Service
 public class BranchServiceImpl implements BranchService {
@@ -17,12 +16,12 @@ public class BranchServiceImpl implements BranchService {
     }
 
     @Override
-    public Mono<Branch> createBranch(Branch branch) {
+    public Branch createBranch(Branch branch) {
         return branchRepository.save(branch);
 
     }
     @Override
-    public Mono<Branch> getBranchById(String id) {
+    public Branch getBranchById(String id) {
         return branchRepository.findById(id);
     }
 }

@@ -1,11 +1,12 @@
 package com.nequi.franchise.application;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.nequi.franchise.domain.Product;
 import com.nequi.franchise.domain.ProductRepository;
-
-import reactor.core.publisher.Mono;
+import com.nequi.franchise.infraestructure.entities.ProductEntity;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -17,23 +18,35 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Mono<Product> createProduct(Product product) {
+    public Product createProduct(Product product) {
         return productRepository.save(product);
 
     }
 
     @Override
-    public Mono<Void> deleteProduct(Product product) {
-        return this.productRepository.delete(product);
+    public void deleteProduct(Product product) {
+        this.productRepository.delete(product);
     }
 
     @Override
-    public Mono<Product> updateStock(String product, Integer stockValue) {
+    public Product updateStock(String product, Integer stockValue) {
         return this.productRepository.updateStock(product, stockValue);
     }
+
     @Override
-    public Mono<Product> getProductById(String id) {
+    public Product getProductById(String id) {
         return productRepository.findById(id);
+    }
+
+    @Override
+    public List<Product> findALL() {
+        return productRepository.findALL();
+
+    }
+
+    @Override
+    public List<ProductEntity> findProductsWithMaxStockByFranchise(String franchiseId) {
+        return findProductsWithMaxStockByFranchise(franchiseId);
     }
 
 }

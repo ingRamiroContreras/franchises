@@ -1,12 +1,12 @@
 package com.nequi.franchise.application;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.nequi.franchise.domain.Franchise;
 import com.nequi.franchise.domain.FranchiseRepository;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 @Service
 public class FranchiseServiceImpl implements FranchiseService {
@@ -18,18 +18,18 @@ public class FranchiseServiceImpl implements FranchiseService {
     }
 
     @Override
-    public Mono<Franchise> createFranchise(Franchise franchise) {
+    public Franchise createFranchise(Franchise franchise) {
         return franchiseRepository.save(franchise);
 
     }
 
     @Override
-    public Mono<Franchise> getFranchiseById(String id) {
+    public Franchise getFranchiseById(String id) {
         return franchiseRepository.findById(id);
     }
 
      @Override
-     public Flux<Franchise> getAllFranchises() {
+     public List<Franchise> getAllFranchises() {
         return franchiseRepository.findAll();
      }
 

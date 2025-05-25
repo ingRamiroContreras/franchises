@@ -1,10 +1,15 @@
 package com.nequi.franchise.domain;
 
-import reactor.core.publisher.Mono;
+import java.util.List;
+
+
+import com.nequi.franchise.infraestructure.entities.ProductEntity;
 
 public interface ProductRepository {
-    Mono<Product> save(Product product);
-    Mono<Void> delete(Product product);
-    Mono<Product> updateStock(String productId, Integer newStock);
-    Mono<Product> findById(String id);
+    public Product save(Product product);
+    public void delete(Product product);
+    public Product updateStock(String productId, Integer newStock);
+    public Product findById(String id);
+    public List<Product> findALL();
+    public List<ProductEntity> findProductsWithMaxStockByFranchise(String franchiseId);
 }

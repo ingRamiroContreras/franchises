@@ -1,83 +1,119 @@
 package com.nequi.franchise.application;
 
-import com.nequi.franchise.domain.Product;
-import com.nequi.franchise.domain.ProductRepository;
+import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.*;
+
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import com.nequi.franchise.domain.Product;
+import com.nequi.franchise.domain.ProductRepository;
 
-public class ProductServiceImplTest {
+class ProductServiceImplTest {
 
+    @Mock
     private ProductRepository productRepository;
+
+    @InjectMocks
     private ProductServiceImpl productService;
 
     @BeforeEach
     void setUp() {
-        productRepository = mock(ProductRepository.class);
-        productService = new ProductServiceImpl(productRepository);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testCreateProduct() {
-        // Arrange
-        Product product = Product.builder().id("1").name("Test Product").build();
-        when(productRepository.save(any(Product.class))).thenReturn(Mono.just(product));
+    void testCreateProductSuccess() {
+        Product product = Product.builder()
+                .id("prod-1")
+                .name("Product 1")
+                .build();
 
-        // Act
-        Mono<Product> result = productService.createProduct(product);
+        when(productRepository.save(any(Product.class))).thenReturn(product);
 
-        // Assert
-        StepVerifier.create(result)
-                .expectNextMatches(savedProduct -> savedProduct.getId().equals("1") &&
-                        savedProduct.getName().equals("Test Product"))
-                .verifyComplete();
+        Product result = productService.createProduct(product);
 
-        verify(productRepository, times(1)).save(any(Product.class));
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo("prod-1");
+        verify(productRepository).save(any(Product.class));
     }
 
     @Test
     void testDeleteProduct() {
-        // Arrange
-        var product = Product
-                .builder()
-                .id("1")
-                .name("Test Product")
-                .build();
-        when(productRepository.delete(product)).thenReturn(Mono.empty());
+        Product product = Product.builder().id("prod-2").build();
+        doNothing().when(productRepository).delete(product);
 
-        // Act
-        Mono<Void> result = productService.deleteProduct(product);
+        productService.deleteProduct(product);
 
-        // Assert
-        StepVerifier.create(result)
-                .verifyComplete();
-
-        verify(productRepository, times(1)).delete(product);
+        verify(productRepository).delete(product);
     }
 
-    /** 
     @Test
-    void testUpdateStock() {
-        // Arrange
-        String productId = "1";
-        Product existingProduct = Product.builder().id(productId).stock(5).build();
-        Product updatedProduct = Product.builder().id(productId).stock(10).build();
-        when(productRepository.updateStock(any(Product.class))).thenReturn(Mono.just(updatedProduct));
+    void testUpdateStockSuccess() {
+        String id = "prod-3";
+        Integer newStock = 50;
+        Product updatedProduct = Product.builder()
+                .id(id)
+                .name("Product 3")
+                .stock(newStock)
+                .build();
 
-        // Act
-        Mono<Product> result = productService.updateStock(productId, 10);
+        when(productRepository.updateStock(id, newStock)).thenReturn(updatedProduct);
 
-        // Assert
-        StepVerifier.create(result)
-                .expectNextMatches(product -> product.getId().equals(productId) &&
-                        product.getStock() == 10)
-                .verifyComplete();
+        Product result = productService.updateStock(id, newStock);
 
-        verify(productRepository, times(1)).save(any(Product.class));
+        assertThat(result).isNotNull();
+        assertThat(result.getStock()).isEqualTo(newStock);
+        verify(productRepository).updateStock(id, newStock);
     }
-        */
+
+    @Test
+    void testGetProductByIdFound() {
+        String id = "prod-4";
+        Product product = Product.builder()
+                .id(id)
+                .name("Product 4")
+                .build();
+
+        when(productRepository.findById(id)).thenReturn(product);
+
+        Product result = productService.getProductById(id);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(id);
+        verify(productRepository).findById(id);
+    }
+
+    @Test
+    void testGetProductByIdNotFound() {
+        String id = "nonexistent";
+        when(productRepository.findById(id)).thenReturn(null);
+
+        Product result = productService.getProductById(id);
+
+        assertThat(result).isNull();
+        verify(productRepository).findById(id);
+    }
+
+    @Test
+    void testFindAllReturnsList() {
+        List<Product> products = Arrays.asList(
+            Product.builder().id("1").name("P1").build(),
+            Product.builder().id("2").name("P2").build()
+        );
+
+        when(productRepository.findALL()).thenReturn(products);
+
+        List<Product> result = productService.findALL();
+
+        assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(2);
+        verify(productRepository).findALL();
+    }
 }
