@@ -191,6 +191,7 @@ public class FranchisesController {
                 return UUID.randomUUID().toString();
         }
 
+        @GetMapping("/max-stock-by-franchise/{franchiseId}")
         public List<ProductMaxStockResponse> getProductsWithMaxStockByFranchise(@PathVariable String franchiseId) {
                 List<Product> products = productService.findProductsWithMaxStockByFranchise(franchiseId);
 

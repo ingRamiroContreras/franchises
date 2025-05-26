@@ -1,7 +1,7 @@
 
 services:
   springboot-app:
-    image: miapp:springboot  
+    image: franchises-app:springboot  
     build:
       context: .
       dockerfile: Dockerfile 
