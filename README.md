@@ -1,6 +1,6 @@
 # Franchises API
 
-API desarrollada en **Spring Boot** para gestionar franquicias, sucursales y productos. Incluye ejemplos de integración con Docker y Docker Compose para desplegar fácilmente en entorno local y una sección para la arquitectura en la nube con un diagrama (que puedes agregar posteriormente).
+API desarrollada en **Spring Boot** para gestionar franquicias, sucursales y productos. Incluye ejemplos de integración con Docker y Docker Compose para desplegar fácilmente en entorno local y una sección para la arquitectura en la nube.
 
 ---
 
@@ -48,23 +48,15 @@ Todo esto fue desplegado siguiendo los principios de **Infraestructura como Cód
 
 ## Ejecutar en local con Docker
 
-1. Es posible cargar el proyecto en un IDE y darle RUN.
 
-2. ejecutar maven package
+1. ejecutar maven package
 
 ```bash
 ./mvnw clean package
 
 ```
 
-3. Docker contruir la imagen:
-
-```bash
-docker build -t franchises-app .
-
-```
-
-4. Docker Compose subir la app:
+2. Docker Compose subir la app:
 
 - setear la variable de ambiente -> SPRING_PROFILE=dev o modificar el docker-compose.yml y dejar directamente - SPRING_PROFILES_ACTIVE=dev
 - ubicarse en el proyecto donde obtenemos el docker-compose.yml
@@ -74,7 +66,9 @@ docker-compose up -d
 
 ```
 
-5. las documentacion de las apis despues de subir el contenedor estan expuestas en http://localhost:8080/swagger-ui/index.html#/ 
+3. las documentacion de las apis despues de subir el contenedor estan expuestas en http://localhost:8080/swagger-ui/index.html#/ 
+
+4. Es posible cargar el proyecto en un IDE y darle RUN.
 
 ---
 
