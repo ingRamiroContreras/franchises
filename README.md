@@ -66,7 +66,7 @@ docker build -t franchises-app .
 
 4. Docker Compose subir la app:
 
-- setear la variable de ambiente -> SPRING_PROFILE=dev
+- setear la variable de ambiente -> SPRING_PROFILE=dev o modificar el docker-compose.yml y dejar directamente - SPRING_PROFILES_ACTIVE=dev
 - ubicarse en el proyecto donde obtenemos el docker-compose.yml
 
 ```bash
@@ -82,7 +82,7 @@ docker-compose up -d
 
 A continuación se presenta un esquema de la arquitectura implementada en AWS para el entorno productivo:
 
-![Diagrama de Arquitectura](ruta/a/tu/diagrama.png)
+![Diagrama de Arquitectura](Nequi-Arqchitecture.drawio.png)
 
 *Descripción del diagrama:*  
 - El **Internet Gateway** permite el acceso externo a la infraestructura, conectando la red interna con internet.  
@@ -94,7 +94,7 @@ A continuación se presenta un esquema de la arquitectura implementada en AWS pa
 
 ## Notas adicionales
 
-### estructura de la DB
+### Estructura de la DB
 
 ```sql
 
